@@ -90,15 +90,34 @@ public:
         chunks[std::floor(head / 256.f) - firstchunk][head % 256] = c;
     }
 
-    void Print()
+    std::string Print(bool isClean = true)
     {
+        std::string output = "";
+
         for (char* i : chunks)
         {
             for (int j = 0; j < 256; j++)
             {
-                std::cout << i[j];
+                output += i[j];
             }
         }
+        if (isClean)
+        {
+            for (int i = 0; i < output.size(); i++)
+                if (output[i] != '0')
+                {
+                    output = output.substr(i);
+                    break;
+                }
+            for (int i = output.size() - 1; i >= 0; i--)
+                if (output[i] != '0')
+                {
+                    output = output.substr(0, i + 1);
+                    break;
+                }
+        }
+
+        return output;
     }
 };
 
@@ -246,6 +265,8 @@ int main()
     }
 
     std::cout << "Feed:\n";
-    tape.Print();
+    std::cout << tape.Print();
+    std::cout << "\n\n\nUntrimmed Feed:\n";
+    std::cout << tape.Print(false);
     std::cout << std::endl;
 }
