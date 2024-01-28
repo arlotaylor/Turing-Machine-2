@@ -30,7 +30,7 @@ class Tape
             }
         }
 
-        while (head >= (firstchunk + chunks.size()) * 256)
+        while (head >= (firstchunk + (int)chunks.size()) * 256)
         {
             chunks.push_back(new char[256]);
             for (int i = 0; i < 256; i++)
@@ -80,14 +80,14 @@ public:
     {
         FillTape();
 
-        return chunks[std::floor(head / 256.f) - firstchunk][head % 256];
+        return chunks[std::floor(head / 256.f) - firstchunk][(head % 256 + 256) % 256];
     }
 
     void Write(char c)
     {
         FillTape();  // is this necessary?
 
-        chunks[std::floor(head / 256.f) - firstchunk][head % 256] = c;
+        chunks[std::floor(head / 256.f) - firstchunk][(head % 256 + 256) % 256] = c;
     }
 
     std::string Print(bool isClean = true)
@@ -245,6 +245,12 @@ int main()
         char currentSymbol = tape.Read();
         tape.Write(instructions[state * 256 + currentSymbol].write);
         tape.MoveHead(instructions[state * 256 + currentSymbol].move);
+
+        if (instructions[state * 256 + currentSymbol].state == INT_MAX - 3)
+        {
+            std::cout << "Error at state " << state << ", symbol " << currentSymbol << ".\n";
+        }
+
         state = instructions[state * 256 + currentSymbol].state;
     }
 
