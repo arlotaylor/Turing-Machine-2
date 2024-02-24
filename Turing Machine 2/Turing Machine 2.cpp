@@ -71,6 +71,14 @@ public:
         }
     }
 
+    ~Tape()
+    {
+        for (char* i : chunks)
+        {
+            delete[] i;
+        }
+    }
+
     void MoveHead(int d)
     {
         head += d;
@@ -120,6 +128,28 @@ public:
         return output;
     }
 };
+
+
+int RunTM(Instruction* instructions, Tape& tape)
+{
+    int state = 0;
+
+    while (state < INT_MAX - 3)
+    {
+        char currentSymbol = tape.Read();
+        tape.Write(instructions[state * 256 + currentSymbol].write);
+        tape.MoveHead(instructions[state * 256 + currentSymbol].move);
+
+        if (instructions[state * 256 + currentSymbol].state == INT_MAX - 3)
+        {
+            std::cout << "Error at state " << state << ", symbol " << currentSymbol << ".\n";
+        }
+
+        state = instructions[state * 256 + currentSymbol].state;
+    }
+
+    return INT_MAX - state;
+}
 
 
 int main()
@@ -196,7 +226,7 @@ int main()
         }
     }
 
-    std::cout << "Done!\nHow would you like to run?\n c - Feed initialised to 0\n i - Feed initialised with text input\n f - Feed initialised with file input\nEnter selection: ";
+    std::cout << "Done!\nHow would you like to run?\n c - Feed initialised to 0\n i - Feed initialised with text input\n f - Feed initialised with file input\n t - Feed initialised with tests\nEnter selection: ";
     std::cin >> filename;
 
     int head = 0;
@@ -229,6 +259,41 @@ int main()
         std::cout << "Please enter the starting position of the head: ";
         std::cin >> head;
     }
+    else if (filename == "t")
+    {
+        std::cout << "Please enter the test filename: ";
+        std::cin >> filename;
+
+        std::cout << "Reading...\n";
+        std::ifstream file(filename);
+
+        if (file.fail())
+        {
+            std::cout << "File read failed. Exiting...";
+            return 0;
+        }
+
+        std::stringstream buffer2;
+        buffer2 << file.rdbuf();
+        filename = buffer2.str();
+        if (filename[filename.size()-1] != '\n')
+            filename = filename + '\n';
+
+        while (filename.size())
+        {
+            Tape tape(filename.substr(0, filename.find('|')), 0);
+            if (RunTM(instructions, tape) != 3 and tape.Print() == filename.substr(filename.find('|') + 1, filename.find('\n') - filename.find('|') - 1))
+            {
+                std::cout << "Test Passed!\n";
+            }
+            else
+            {
+                std::cout << "Test Failed!!! Output: " << tape.Print() << "\n";
+            }
+            filename = filename.substr(filename.find('\n') + 1);
+        }
+        return 0;
+    }
     else
     {
         filename = "";
@@ -238,34 +303,18 @@ int main()
 
     std::cout << "Tape initialised. Running program...";
 
-    int state = 0;
-
-    while (state < INT_MAX - 3)
+    switch (RunTM(instructions, tape))
     {
-        char currentSymbol = tape.Read();
-        tape.Write(instructions[state * 256 + currentSymbol].write);
-        tape.MoveHead(instructions[state * 256 + currentSymbol].move);
-
-        if (instructions[state * 256 + currentSymbol].state == INT_MAX - 3)
-        {
-            std::cout << "Error at state " << state << ", symbol " << currentSymbol << ".\n";
-        }
-
-        state = instructions[state * 256 + currentSymbol].state;
-    }
-
-    switch (state)
-    {
-    case INT_MAX - 3:
+    case 3:
         std::cout << "Error: Turing Machine reached empty instruction. Exiting...\n";
         break;
-    case INT_MAX - 2:
+    case 2:
         std::cout << "Turing Machine has exited FALSE.\n";
         break;
-    case INT_MAX - 1:
+    case 1:
         std::cout << "Turing Machine has exited TRUE.\n";
         break;
-    case INT_MAX:
+    case 0:
         std::cout << "Turing Machine has exited.\n";
         break;
     }
